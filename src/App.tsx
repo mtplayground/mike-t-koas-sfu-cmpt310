@@ -1,5 +1,6 @@
 import "./styles/index.css";
 import { AppShell } from "./components/layout/AppShell";
+import { Math } from "./components/math/Math";
 
 export function App() {
   return (
@@ -32,8 +33,12 @@ function DiagramPlaceholder() {
 
 function MathPlaceholder() {
   return (
-    <div className="rounded-lg bg-zinc-950 px-4 py-5 font-mono text-sm text-stone-50">
-      dL/dw = dL/dy * dy/dw
+    <div className="rounded-lg bg-stone-100 px-4 py-5 text-zinc-900">
+      <Math
+        latex={String.raw`\frac{\partial L}{\partial w} = \frac{\partial L}{\partial y}\cdot\frac{\partial y}{\partial w}`}
+        displayMode
+        ariaLabel="partial derivative of loss with respect to weight"
+      />
     </div>
   );
 }
