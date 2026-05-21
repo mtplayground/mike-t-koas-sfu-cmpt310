@@ -17,12 +17,17 @@ export interface LocalGradient {
   derivative: number;
 }
 
+export interface BackwardOptions {
+  seed?: number;
+}
+
 export class Value {
   readonly data: number;
   readonly children: readonly Value[];
   readonly localGradients: readonly LocalGradient[];
   readonly op: ValueOperation;
   readonly label?: string;
+  grad: number;
 
   private constructor(
     data: number,
@@ -38,6 +43,7 @@ export class Value {
     this.localGradients = freezeLocalGradients(localGradients, this.children);
     this.op = op;
     this.label = options.label;
+    this.grad = 0;
   }
 
   static constant(data: number, options?: ValueOptions): Value {
@@ -103,6 +109,23 @@ export class Value {
       { child: this, derivative: 1 - output * output },
     ]);
   }
+
+  zeroGrad(): void {
+    this.grad = 0;
+  }
+
+  addGrad(gradient: number): void {
+    assertFiniteNumber(gradient);
+
+    const nextGradient = this.grad + gradient;
+    assertFiniteNumber(nextGradient);
+
+    this.grad = nextGradient;
+  }
+
+  backward(options?: BackwardOptions): void {
+    backward(this, options);
+  }
 }
 
 export function constant(data: number, options?: ValueOptions): Value {
@@ -135,6 +158,50 @@ export function relu(input: ValueInput, options?: ValueOptions): Value {
 
 export function tanh(input: ValueInput, options?: ValueOptions): Value {
   return Value.tanh(input, options);
+}
+
+export function topologicalSort(root: Value): readonly Value[] {
+  const sorted: Value[] = [];
+  const visited = new Set<Value>();
+
+  function visit(value: Value): void {
+    if (visited.has(value)) {
+      return;
+    }
+
+    visited.add(value);
+
+    for (const child of value.children) {
+      visit(child);
+    }
+
+    sorted.push(value);
+  }
+
+  visit(root);
+
+  return sorted;
+}
+
+export function backward(root: Value, options: BackwardOptions = {}): void {
+  const seed = options.seed ?? 1;
+  assertFiniteNumber(seed);
+
+  const sorted = topologicalSort(root);
+
+  for (const value of sorted) {
+    value.zeroGrad();
+  }
+
+  root.addGrad(seed);
+
+  for (let index = sorted.length - 1; index >= 0; index -= 1) {
+    const value = sorted[index];
+
+    for (const localGradient of value.localGradients) {
+      localGradient.child.addGrad(value.grad * localGradient.derivative);
+    }
+  }
 }
 
 function asValue(value: ValueInput): Value {
