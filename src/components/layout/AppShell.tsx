@@ -1,20 +1,19 @@
 import type { ReactNode } from "react";
 
 interface AppShellProps {
+  controls: ReactNode;
   diagram: ReactNode;
   math: ReactNode;
   explanation: ReactNode;
 }
 
-export function AppShell({ diagram, math, explanation }: AppShellProps) {
+export function AppShell({ controls, diagram, math, explanation }: AppShellProps) {
   return (
     <main className="min-h-screen bg-stone-50 text-zinc-950">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-3 border-b border-zinc-200 pb-5 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
-              CMPT 310
-            </p>
+            <p className="text-sm font-semibold uppercase text-teal-700">CMPT 310</p>
             <h1 className="mt-2 text-3xl font-semibold text-zinc-950 sm:text-4xl">
               Neural Network Walkthrough
             </h1>
@@ -25,14 +24,14 @@ export function AppShell({ diagram, math, explanation }: AppShellProps) {
           </p>
         </header>
 
-        <div className="grid flex-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid flex-1 gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
           <section
             aria-labelledby="diagram-panel-title"
-            className="min-h-[420px] rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
+            className="flex min-h-[420px] flex-col rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
           >
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-coral-700">
+                <p className="text-xs font-semibold uppercase text-coral-700">
                   Diagram
                 </p>
                 <h2
@@ -43,17 +42,19 @@ export function AppShell({ diagram, math, explanation }: AppShellProps) {
                 </h2>
               </div>
             </div>
-            {diagram}
+            <div className="flex-1" data-layout-region="diagram">
+              {diagram}
+            </div>
+            <div data-layout-region="controls">{controls}</div>
           </section>
 
-          <aside className="grid gap-5 lg:grid-rows-[minmax(0,1fr)_minmax(0,1fr)]">
+          <aside className="grid gap-5 lg:grid-cols-2 xl:grid-cols-1 xl:grid-rows-[minmax(0,1fr)_minmax(0,1fr)]">
             <section
               aria-labelledby="math-panel-title"
               className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
+              data-layout-region="math"
             >
-              <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">
-                Math
-              </p>
+              <p className="text-xs font-semibold uppercase text-teal-700">Math</p>
               <h2
                 id="math-panel-title"
                 className="mt-1 text-xl font-semibold text-zinc-950"
@@ -66,8 +67,9 @@ export function AppShell({ diagram, math, explanation }: AppShellProps) {
             <section
               aria-labelledby="explanation-panel-title"
               className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
+              data-layout-region="explanation"
             >
-              <p className="text-xs font-semibold uppercase tracking-wide text-coral-700">
+              <p className="text-xs font-semibold uppercase text-coral-700">
                 Explanation
               </p>
               <h2

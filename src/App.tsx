@@ -49,17 +49,15 @@ export function App() {
 
   return (
     <AppShell
-      diagram={
-        <>
-          <NetworkDiagram activeStep={stepState.currentStep} />
-          <StepNavigation
-            state={stepState}
-            onNext={goNext}
-            onPrevious={goPrevious}
-            onReset={reset}
-          />
-        </>
+      controls={
+        <StepNavigation
+          state={stepState}
+          onNext={goNext}
+          onPrevious={goPrevious}
+          onReset={reset}
+        />
       }
+      diagram={<NetworkDiagram activeStep={stepState.currentStep} />}
       math={<ChainRulePanel state={stepState} />}
       explanation={<StepExplanationPanel state={stepState} />}
     />
