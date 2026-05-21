@@ -2,7 +2,7 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
-function normalizeBasePath(rawBasePath: string | undefined) {
+export function normalizeBasePath(rawBasePath: string | undefined) {
   const basePath = rawBasePath?.trim();
 
   if (!basePath || basePath === "/") {
