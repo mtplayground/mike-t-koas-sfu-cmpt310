@@ -17,6 +17,8 @@ describe("StepNavigation", () => {
     expect(markup.match(/disabled=""/g)).toHaveLength(2);
     expect(markup).toContain('aria-keyshortcuts="ArrowRight"');
     expect(markup).toContain('aria-keyshortcuts="ArrowLeft"');
+    expect(markup).toContain('aria-keyshortcuts="Home"');
+    expect(markup).toContain("Use Left Arrow for previous");
   });
 
   it("disables next at the final step", () => {

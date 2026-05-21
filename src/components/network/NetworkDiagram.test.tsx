@@ -28,6 +28,7 @@ describe("NetworkDiagram", () => {
     expect(markup).toContain('data-node-id="x1"');
     expect(markup).toContain('data-active="true"');
     expect(markup).toContain('aria-current="step"');
+    expect(markup).toContain('aria-label="x1 neuron, 0.50, active step node"');
   });
 
   it("maps step controller edge targets onto visible weighted connections", () => {
@@ -44,6 +45,7 @@ describe("NetworkDiagram", () => {
     expect(markup).toContain('data-node-id="h1"');
     expect(markup).toContain('data-edge-id="x1-&gt;h1"');
     expect(markup).toContain('marker-end="url(#network-arrow-active)"');
+    expect(markup).toContain("active step connection");
   });
 
   it("describes forward edge animations with signed value styling", () => {

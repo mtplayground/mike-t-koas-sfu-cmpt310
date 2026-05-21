@@ -25,7 +25,7 @@ export function App() {
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.defaultPrevented) {
+      if (event.defaultPrevented || isEditableTarget(event.target)) {
         return;
       }
 
@@ -37,6 +37,11 @@ export function App() {
       if (event.key === "ArrowLeft") {
         event.preventDefault();
         setStepState(controller.previous());
+      }
+
+      if (event.key === "Home") {
+        event.preventDefault();
+        setStepState(controller.reset());
       }
     }
 
@@ -61,5 +66,18 @@ export function App() {
       math={<ChainRulePanel state={stepState} />}
       explanation={<StepExplanationPanel state={stepState} />}
     />
+  );
+}
+
+function isEditableTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return (
+    target.isContentEditable ||
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement
   );
 }

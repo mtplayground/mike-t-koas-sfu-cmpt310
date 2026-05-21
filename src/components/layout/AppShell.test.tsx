@@ -17,6 +17,8 @@ describe("AppShell", () => {
     expect(markup).toContain('data-layout-region="controls"');
     expect(markup).toContain('data-layout-region="math"');
     expect(markup).toContain('data-layout-region="explanation"');
+    expect(markup).toContain('href="#walkthrough-content"');
+    expect(markup).toContain('id="walkthrough-content"');
     expect(markup).toContain("diagram panel");
     expect(markup).toContain("navigation controls");
     expect(markup).toContain("math panel");
