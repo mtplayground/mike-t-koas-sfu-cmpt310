@@ -4,6 +4,7 @@ export {
   PRESET_WEIGHTS,
   buildPresetNetwork,
 } from "./preset";
+export { StepController, createStepController } from "./stepController";
 export type {
   BiasId,
   HiddenNodeId,
@@ -14,5 +15,9 @@ export type {
   PresetNetworkValues,
   PresetTrainingExample,
   PresetWeights,
+  ParameterUpdate,
+  StepDescriptor,
+  StepPhase,
   WeightId,
 } from "./types";
+export type { StepControllerOptions, StepControllerState } from "./stepController";

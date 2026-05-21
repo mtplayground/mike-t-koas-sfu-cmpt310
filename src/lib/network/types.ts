@@ -12,6 +12,7 @@ export type WeightId =
   | "w_h2_y";
 export type BiasId = "b_h1" | "b_h2" | "b_y";
 export type ParameterId = WeightId | BiasId;
+export type StepPhase = "forward" | "loss" | "backward" | "update";
 
 export interface PresetTrainingExample {
   inputs: Readonly<Record<InputId, number>>;
@@ -48,4 +49,22 @@ export interface PresetNetworkValues {
   target: Value;
   loss: Value;
   parameters: readonly Value[];
+}
+
+export interface StepDescriptor {
+  id: string;
+  phase: StepPhase;
+  title: string;
+  activeNodeId?: string;
+  activeEdgeId?: string;
+  value?: number;
+  gradient?: number;
+}
+
+export interface ParameterUpdate {
+  parameterId: ParameterId;
+  before: number;
+  gradient: number;
+  after: number;
+  learningRate: number;
 }
