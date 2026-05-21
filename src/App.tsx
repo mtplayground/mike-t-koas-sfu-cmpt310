@@ -1,16 +1,48 @@
 import "./styles/index.css";
+import { AppShell } from "./components/layout/AppShell";
 
 export function App() {
   return (
-    <main className="app">
-      <section className="intro" aria-labelledby="page-title">
-        <p className="eyebrow">CMPT 310</p>
-        <h1 id="page-title">Neural Network Walkthrough</h1>
-        <p>
-          A React and TypeScript foundation for an interactive visualization of
-          forward passes, loss, backpropagation, and weight updates.
-        </p>
-      </section>
-    </main>
+    <AppShell
+      diagram={<DiagramPlaceholder />}
+      math={<MathPlaceholder />}
+      explanation={<ExplanationPlaceholder />}
+    />
+  );
+}
+
+function DiagramPlaceholder() {
+  return (
+    <div className="grid min-h-[320px] place-items-center rounded-lg border border-dashed border-zinc-300 bg-stone-100/70 p-6">
+      <div className="grid gap-4 text-center">
+        <div className="mx-auto grid grid-cols-3 items-center gap-3 text-sm font-semibold text-zinc-700">
+          <span className="rounded-full border border-teal-300 bg-teal-50 px-4 py-3">
+            x
+          </span>
+          <span className="h-px w-10 bg-zinc-300" aria-hidden="true" />
+          <span className="rounded-full border border-coral-300 bg-coral-50 px-4 py-3">
+            y
+          </span>
+        </div>
+        <p className="text-sm text-zinc-500">Diagram region</p>
+      </div>
+    </div>
+  );
+}
+
+function MathPlaceholder() {
+  return (
+    <div className="rounded-lg bg-zinc-950 px-4 py-5 font-mono text-sm text-stone-50">
+      dL/dw = dL/dy * dy/dw
+    </div>
+  );
+}
+
+function ExplanationPlaceholder() {
+  return (
+    <p className="text-sm leading-6 text-zinc-600">
+      Step context will appear here as the controller advances through the
+      training sequence.
+    </p>
   );
 }
