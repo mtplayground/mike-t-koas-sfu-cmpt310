@@ -43,3 +43,29 @@ test("walks through forward, loss, backward, and update steps", async ({ page })
   await expect(navigation).toHaveAttribute("data-navigation-step", steps[0].id);
   await expect(page.getByText(`Step 1 of ${steps.length}`)).toBeVisible();
 });
+
+test("supports keyboard navigation and small-screen layout", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.goto("/");
+
+  const navigation = page.locator("[data-navigation-step]");
+
+  await expect(navigation).toHaveAttribute("data-navigation-step", "forward:x1");
+  await page.keyboard.press("ArrowRight");
+  await expect(navigation).toHaveAttribute("data-navigation-step", "forward:x2");
+  await page.keyboard.press("ArrowLeft");
+  await expect(navigation).toHaveAttribute("data-navigation-step", "forward:x1");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("Home");
+  await expect(navigation).toHaveAttribute("data-navigation-step", "forward:x1");
+
+  await expect(
+    page.getByRole("img", { name: /preset neural network diagram/i }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Go to next step" })).toBeVisible();
+
+  const hasHorizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  );
+  expect(hasHorizontalOverflow).toBe(false);
+});

@@ -223,6 +223,7 @@ export function NetworkDiagram({ activeStep }: NetworkDiagramProps) {
         viewBox="0 0 660 420"
         role="img"
         aria-labelledby="network-diagram-title network-diagram-description"
+        data-active-step={activeStep?.id}
       >
         <title id="network-diagram-title">Preset neural network diagram</title>
         <desc id="network-diagram-description">
@@ -317,8 +318,10 @@ function DiagramEdge({ edge, isActive }: { edge: DiagramEdge; isActive: boolean 
 
   return (
     <g
+      role="group"
       data-edge-id={edge.id}
       data-active={isActive ? "true" : undefined}
+      aria-label={`${edge.label} connection${isActive ? ", active step connection" : ""}`}
       aria-current={isActive ? "step" : undefined}
     >
       <line
@@ -355,9 +358,11 @@ function DiagramNode({ node, isActive }: { node: DiagramNode; isActive: boolean 
 
   return (
     <g
+      role="group"
       transform={`translate(${node.x} ${node.y})`}
       data-node-id={node.id}
       data-active={isActive ? "true" : undefined}
+      aria-label={`${node.label} neuron, ${node.detail}${isActive ? ", active step node" : ""}`}
       aria-current={isActive ? "step" : undefined}
     >
       {isActive ? (

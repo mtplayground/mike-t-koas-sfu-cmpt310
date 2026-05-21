@@ -10,6 +10,12 @@ interface AppShellProps {
 export function AppShell({ controls, diagram, math, explanation }: AppShellProps) {
   return (
     <main className="min-h-screen bg-stone-50 text-zinc-950">
+      <a
+        href="#walkthrough-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-teal-800 focus:shadow-lg focus:ring-2 focus:ring-teal-600"
+      >
+        Skip to walkthrough
+      </a>
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-3 border-b border-zinc-200 pb-5 md:flex-row md:items-end md:justify-between">
           <div>
@@ -24,7 +30,10 @@ export function AppShell({ controls, diagram, math, explanation }: AppShellProps
           </p>
         </header>
 
-        <div className="grid flex-1 gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
+        <div
+          id="walkthrough-content"
+          className="grid flex-1 gap-5 xl:grid-cols-[minmax(0,1fr)_400px]"
+        >
           <section
             aria-labelledby="diagram-panel-title"
             className="flex min-h-[420px] flex-col rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
