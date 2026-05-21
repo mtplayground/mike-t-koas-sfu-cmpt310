@@ -45,4 +45,40 @@ describe("NetworkDiagram", () => {
     expect(markup).toContain('data-edge-id="x1-&gt;h1"');
     expect(markup).toContain('marker-end="url(#network-arrow-active)"');
   });
+
+  it("describes forward edge animations with signed value styling", () => {
+    const activeStep: StepDescriptor = {
+      id: "forward:z_h2",
+      phase: "forward",
+      title: "Compute h2 pre-activation",
+      activeNodeId: "z_h2",
+      activeEdgeId: "x2->h2",
+      value: -0.5,
+    };
+
+    const markup = renderToStaticMarkup(<NetworkDiagram activeStep={activeStep} />);
+
+    expect(markup).toContain('data-animation-edge="x2-&gt;h2"');
+    expect(markup).toContain('data-animation-phase="forward"');
+    expect(markup).toContain('data-animation-value="-0.50"');
+    expect(markup).toContain('data-animation-color="rgb(');
+  });
+
+  it("describes backward edge animations with gradient styling", () => {
+    const activeStep: StepDescriptor = {
+      id: "backward:h2",
+      phase: "backward",
+      title: "Backpropagate to h2",
+      activeNodeId: "h2",
+      activeEdgeId: "z_y->h2",
+      gradient: 0.25,
+    };
+
+    const markup = renderToStaticMarkup(<NetworkDiagram activeStep={activeStep} />);
+
+    expect(markup).toContain('data-animation-edge="h2-&gt;yHat"');
+    expect(markup).toContain('data-animation-phase="backward"');
+    expect(markup).toContain('data-animation-value="0.25"');
+    expect(markup).toContain('data-animation-opacity="');
+  });
 });

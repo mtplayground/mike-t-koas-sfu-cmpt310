@@ -1,3 +1,8 @@
+import { useEffect, useMemo, useRef } from "react";
+import { easeCubicInOut } from "d3-ease";
+import { interpolateNumber, interpolateRgb } from "d3-interpolate";
+import { select, type Selection } from "d3-selection";
+import "d3-transition";
 import {
   PRESET_TRAINING_EXAMPLE,
   PRESET_WEIGHTS,
@@ -24,6 +29,15 @@ interface DiagramEdge {
 
 interface NetworkDiagramProps {
   activeStep?: StepDescriptor;
+}
+
+interface AnimationState {
+  edgeId?: string;
+  phase?: "forward" | "backward";
+  value?: number;
+  color: string;
+  radius: number;
+  opacity: number;
 }
 
 const nodes: readonly DiagramNode[] = [
@@ -121,6 +135,7 @@ const edges: readonly DiagramEdge[] = [
 ];
 
 const nodeById = new Map(nodes.map((node) => [node.id, node]));
+const edgeById = new Map(edges.map((edge) => [edge.id, edge]));
 const visibleEdgeIds = new Set(edges.map((edge) => edge.id));
 const edgeByParameterId = new Map(edges.map((edge) => [edge.parameterId, edge.id]));
 
@@ -145,6 +160,61 @@ const edgeAliases: Readonly<Record<string, string>> = {
 
 export function NetworkDiagram({ activeStep }: NetworkDiagramProps) {
   const activeElement = resolveActiveElement(activeStep);
+  const animation = useMemo(
+    () => buildAnimationState(activeStep, activeElement.edgeId),
+    [activeElement.edgeId, activeStep],
+  );
+  const animationLayerRef = useRef<SVGGElement | null>(null);
+
+  useEffect(() => {
+    const layerNode = animationLayerRef.current;
+
+    if (!layerNode) {
+      return;
+    }
+
+    const layer = select(layerNode);
+    layer.interrupt();
+    layer.selectAll("*").remove();
+
+    if (!animation.edgeId || !animation.phase || animation.value === undefined) {
+      return;
+    }
+
+    const edge = edgeById.get(animation.edgeId);
+
+    if (!edge) {
+      return;
+    }
+
+    const path = edgePath(edge, animation.phase === "backward");
+    const prefersReducedMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (prefersReducedMotion) {
+      renderParticle(layer, path.end, animation);
+      return;
+    }
+
+    const particle = renderParticle(layer, path.start, animation);
+    const duration = 950;
+    const x = interpolateNumber(path.start.x, path.end.x);
+    const y = interpolateNumber(path.start.y, path.end.y);
+
+    particle
+      .transition()
+      .duration(duration)
+      .ease(easeCubicInOut)
+      .attrTween("transform", () => (time) => `translate(${x(time)} ${y(time)})`)
+      .transition()
+      .duration(180)
+      .attr("opacity", 0);
+
+    return () => {
+      layer.interrupt();
+    };
+  }, [animation]);
 
   return (
     <figure className="overflow-hidden rounded-lg border border-zinc-200 bg-stone-50">
@@ -194,6 +264,18 @@ export function NetworkDiagram({ activeStep }: NetworkDiagramProps) {
             />
           ))}
         </g>
+
+        <g
+          ref={animationLayerRef}
+          aria-hidden="true"
+          data-animation-edge={animation.edgeId}
+          data-animation-phase={animation.phase}
+          data-animation-value={
+            animation.value === undefined ? undefined : formatValue(animation.value)
+          }
+          data-animation-color={animation.color}
+          data-animation-opacity={animation.opacity.toFixed(2)}
+        />
 
         <g aria-label="Network neurons">
           {nodes.map((node) => (
@@ -336,6 +418,110 @@ function resolveVisibleEdgeId(id: string | undefined) {
   }
 
   return edgeByParameterId.get(id) ?? edgeAliases[id];
+}
+
+function buildAnimationState(
+  activeStep: StepDescriptor | undefined,
+  edgeId: string | undefined,
+): AnimationState {
+  if (!activeStep || !edgeId) {
+    return baseAnimationState();
+  }
+
+  if (activeStep.phase === "forward" && activeStep.value !== undefined) {
+    return animationStateFromValue(edgeId, activeStep.phase, activeStep.value);
+  }
+
+  if (activeStep.phase === "backward" && activeStep.gradient !== undefined) {
+    return animationStateFromValue(edgeId, activeStep.phase, activeStep.gradient);
+  }
+
+  return baseAnimationState(edgeId);
+}
+
+function baseAnimationState(edgeId?: string): AnimationState {
+  return {
+    edgeId,
+    color: "#71717a",
+    radius: 5,
+    opacity: 0.72,
+  };
+}
+
+function animationStateFromValue(
+  edgeId: string,
+  phase: "forward" | "backward",
+  value: number,
+): AnimationState {
+  const magnitude = Math.min(Math.abs(value), 1);
+
+  return {
+    edgeId,
+    phase,
+    value,
+    color: signedMagnitudeColor(value, magnitude),
+    radius: 4 + magnitude * 6,
+    opacity: 0.48 + magnitude * 0.42,
+  };
+}
+
+function signedMagnitudeColor(value: number, magnitude: number) {
+  if (value > 0) {
+    return interpolateRgb("#fca5a5", "#b91c1c")(magnitude);
+  }
+
+  if (value < 0) {
+    return interpolateRgb("#93c5fd", "#1d4ed8")(magnitude);
+  }
+
+  return "#71717a";
+}
+
+function renderParticle(
+  layer: Selection<SVGGElement, unknown, null, undefined>,
+  point: { x: number; y: number },
+  animation: AnimationState,
+) {
+  const particle = layer
+    .append("g")
+    .attr("transform", `translate(${point.x} ${point.y})`)
+    .attr("opacity", animation.opacity);
+
+  particle
+    .append("circle")
+    .attr("r", animation.radius)
+    .attr("fill", animation.color)
+    .attr("stroke", "#fafaf9")
+    .attr("stroke-width", 2);
+
+  particle
+    .append("text")
+    .attr("y", -12)
+    .attr("text-anchor", "middle")
+    .attr("paint-order", "stroke")
+    .attr("stroke", "#fafaf9")
+    .attr("stroke-width", 5)
+    .attr("fill", animation.color)
+    .attr("font-size", 12)
+    .attr("font-weight", 700)
+    .text(
+      `${animation.phase === "backward" ? "g" : "a"}=${formatValue(animation.value ?? 0)}`,
+    );
+
+  return particle;
+}
+
+function edgePath(edge: DiagramEdge, reverse: boolean) {
+  const from = requireNode(edge.from);
+  const to = requireNode(edge.to);
+  const start = endpoint(from, to, 48);
+  const end = endpoint(to, from, 52);
+
+  if (reverse) {
+    return { start: end, end: start };
+  }
+
+  return { start, end };
 }
 
 function endpoint(from: DiagramNode, to: DiagramNode, radius: number) {
