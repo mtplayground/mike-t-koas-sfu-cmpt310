@@ -1,12 +1,16 @@
+import { useMemo } from "react";
 import "./styles/index.css";
 import { AppShell } from "./components/layout/AppShell";
 import { Math } from "./components/math/Math";
 import { NetworkDiagram } from "./components/network/NetworkDiagram";
+import { createStepController } from "./lib/network";
 
 export function App() {
+  const stepState = useMemo(() => createStepController().getState(), []);
+
   return (
     <AppShell
-      diagram={<NetworkDiagram />}
+      diagram={<NetworkDiagram activeStep={stepState.currentStep} />}
       math={<MathPlaceholder />}
       explanation={<ExplanationPlaceholder />}
     />

@@ -1,4 +1,8 @@
-import { PRESET_TRAINING_EXAMPLE, PRESET_WEIGHTS } from "../../lib/network";
+import {
+  PRESET_TRAINING_EXAMPLE,
+  PRESET_WEIGHTS,
+  type StepDescriptor,
+} from "../../lib/network";
 
 interface DiagramNode {
   id: string;
@@ -11,10 +15,15 @@ interface DiagramNode {
 
 interface DiagramEdge {
   id: string;
+  parameterId: string;
   from: string;
   to: string;
   label: string;
   labelOffsetY: number;
+}
+
+interface NetworkDiagramProps {
+  activeStep?: StepDescriptor;
 }
 
 const nodes: readonly DiagramNode[] = [
@@ -63,6 +72,7 @@ const nodes: readonly DiagramNode[] = [
 const edges: readonly DiagramEdge[] = [
   {
     id: "x1->h1",
+    parameterId: "w_x1_h1",
     from: "x1",
     to: "h1",
     label: `w_x1_h1 = ${formatValue(PRESET_WEIGHTS.inputHidden.h1.x1)}`,
@@ -70,6 +80,7 @@ const edges: readonly DiagramEdge[] = [
   },
   {
     id: "x2->h1",
+    parameterId: "w_x2_h1",
     from: "x2",
     to: "h1",
     label: `w_x2_h1 = ${formatValue(PRESET_WEIGHTS.inputHidden.h1.x2)}`,
@@ -77,6 +88,7 @@ const edges: readonly DiagramEdge[] = [
   },
   {
     id: "x1->h2",
+    parameterId: "w_x1_h2",
     from: "x1",
     to: "h2",
     label: `w_x1_h2 = ${formatValue(PRESET_WEIGHTS.inputHidden.h2.x1)}`,
@@ -84,6 +96,7 @@ const edges: readonly DiagramEdge[] = [
   },
   {
     id: "x2->h2",
+    parameterId: "w_x2_h2",
     from: "x2",
     to: "h2",
     label: `w_x2_h2 = ${formatValue(PRESET_WEIGHTS.inputHidden.h2.x2)}`,
@@ -91,6 +104,7 @@ const edges: readonly DiagramEdge[] = [
   },
   {
     id: "h1->yHat",
+    parameterId: "w_h1_y",
     from: "h1",
     to: "yHat",
     label: `w_h1_y = ${formatValue(PRESET_WEIGHTS.hiddenOutput.h1)}`,
@@ -98,6 +112,7 @@ const edges: readonly DiagramEdge[] = [
   },
   {
     id: "h2->yHat",
+    parameterId: "w_h2_y",
     from: "h2",
     to: "yHat",
     label: `w_h2_y = ${formatValue(PRESET_WEIGHTS.hiddenOutput.h2)}`,
@@ -106,8 +121,31 @@ const edges: readonly DiagramEdge[] = [
 ];
 
 const nodeById = new Map(nodes.map((node) => [node.id, node]));
+const visibleEdgeIds = new Set(edges.map((edge) => edge.id));
+const edgeByParameterId = new Map(edges.map((edge) => [edge.parameterId, edge.id]));
 
-export function NetworkDiagram() {
+const nodeAliases: Readonly<Record<string, string>> = {
+  b_h1: "h1",
+  b_h2: "h2",
+  b_y: "yHat",
+  loss: "yHat",
+  z_h1: "h1",
+  z_h2: "h2",
+  z_y: "yHat",
+};
+
+const edgeAliases: Readonly<Record<string, string>> = {
+  "loss->yHat": "h1->yHat",
+  "parameters->updated-parameters": "x1->h1",
+  "yHat->loss": "h1->yHat",
+  "yHat->z_y": "h1->yHat",
+  "z_y->h1": "h1->yHat",
+  "z_y->h2": "h2->yHat",
+};
+
+export function NetworkDiagram({ activeStep }: NetworkDiagramProps) {
+  const activeElement = resolveActiveElement(activeStep);
+
   return (
     <figure className="overflow-hidden rounded-lg border border-zinc-200 bg-stone-50">
       <svg
@@ -133,18 +171,37 @@ export function NetworkDiagram() {
           >
             <path d="M0,0 L8,4 L0,8 Z" fill="#52525b" />
           </marker>
+          <marker
+            id="network-arrow-active"
+            markerHeight="9"
+            markerWidth="9"
+            orient="auto"
+            refX="8"
+            refY="4.5"
+            viewBox="0 0 9 9"
+          >
+            <path d="M0,0 L9,4.5 L0,9 Z" fill="#d97706" />
+          </marker>
         </defs>
         <rect width="660" height="420" rx="8" fill="#fafaf9" />
 
         <g aria-label="Weighted connections">
           {edges.map((edge) => (
-            <DiagramEdge key={edge.id} edge={edge} />
+            <DiagramEdge
+              key={edge.id}
+              edge={edge}
+              isActive={edge.id === activeElement.edgeId}
+            />
           ))}
         </g>
 
         <g aria-label="Network neurons">
           {nodes.map((node) => (
-            <DiagramNode key={node.id} node={node} />
+            <DiagramNode
+              key={node.id}
+              node={node}
+              isActive={node.id === activeElement.nodeId}
+            />
           ))}
         </g>
 
@@ -164,34 +221,42 @@ export function NetworkDiagram() {
   );
 }
 
-function DiagramEdge({ edge }: { edge: DiagramEdge }) {
+function DiagramEdge({ edge, isActive }: { edge: DiagramEdge; isActive: boolean }) {
   const from = requireNode(edge.from);
   const to = requireNode(edge.to);
   const start = endpoint(from, to, 44);
   const end = endpoint(to, from, 48);
   const labelX = (start.x + end.x) / 2;
   const labelY = (start.y + end.y) / 2 + edge.labelOffsetY;
+  const stroke = isActive ? "#d97706" : "#52525b";
+  const textClassName = isActive
+    ? "fill-amber-700 text-[12px] font-bold"
+    : "fill-zinc-700 text-[12px] font-semibold";
 
   return (
-    <g>
+    <g
+      data-edge-id={edge.id}
+      data-active={isActive ? "true" : undefined}
+      aria-current={isActive ? "step" : undefined}
+    >
       <line
         x1={start.x}
         y1={start.y}
         x2={end.x}
         y2={end.y}
-        stroke="#52525b"
-        strokeWidth="2"
-        markerEnd="url(#network-arrow)"
+        stroke={stroke}
+        strokeWidth={isActive ? "4" : "2"}
+        markerEnd={isActive ? "url(#network-arrow-active)" : "url(#network-arrow)"}
         vectorEffect="non-scaling-stroke"
       />
       <text
         x={labelX}
         y={labelY}
         textAnchor="middle"
-        className="fill-zinc-700 text-[12px] font-semibold"
+        className={textClassName}
         paintOrder="stroke"
         stroke="#fafaf9"
-        strokeWidth="6"
+        strokeWidth={isActive ? "8" : "6"}
       >
         {edge.label}
       </text>
@@ -199,15 +264,29 @@ function DiagramEdge({ edge }: { edge: DiagramEdge }) {
   );
 }
 
-function DiagramNode({ node }: { node: DiagramNode }) {
+function DiagramNode({ node, isActive }: { node: DiagramNode; isActive: boolean }) {
   const fill =
     node.tone === "input" ? "#ecfeff" : node.tone === "hidden" ? "#fff7ed" : "#f0fdf4";
   const stroke =
     node.tone === "input" ? "#0f766e" : node.tone === "hidden" ? "#c2410c" : "#15803d";
+  const nodeStroke = isActive ? "#d97706" : stroke;
 
   return (
-    <g transform={`translate(${node.x} ${node.y})`}>
-      <circle r="44" fill={fill} stroke={stroke} strokeWidth="2.5" />
+    <g
+      transform={`translate(${node.x} ${node.y})`}
+      data-node-id={node.id}
+      data-active={isActive ? "true" : undefined}
+      aria-current={isActive ? "step" : undefined}
+    >
+      {isActive ? (
+        <circle r="52" fill="none" stroke="#fbbf24" strokeWidth="5" opacity="0.55" />
+      ) : null}
+      <circle
+        r="44"
+        fill={fill}
+        stroke={nodeStroke}
+        strokeWidth={isActive ? "4" : "2.5"}
+      />
       <text y="-4" textAnchor="middle" className="fill-zinc-950 text-[20px] font-bold">
         {node.label}
       </text>
@@ -220,6 +299,43 @@ function DiagramNode({ node }: { node: DiagramNode }) {
       </text>
     </g>
   );
+}
+
+function resolveActiveElement(activeStep: StepDescriptor | undefined) {
+  if (!activeStep) {
+    return {};
+  }
+
+  const edgeId =
+    resolveVisibleEdgeId(activeStep.activeEdgeId) ??
+    resolveVisibleEdgeId(activeStep.activeNodeId);
+  const nodeId = resolveVisibleNodeId(activeStep.activeNodeId);
+
+  return { edgeId, nodeId };
+}
+
+function resolveVisibleNodeId(id: string | undefined) {
+  if (!id) {
+    return undefined;
+  }
+
+  if (nodeById.has(id)) {
+    return id;
+  }
+
+  return nodeAliases[id];
+}
+
+function resolveVisibleEdgeId(id: string | undefined) {
+  if (!id) {
+    return undefined;
+  }
+
+  if (visibleEdgeIds.has(id)) {
+    return id;
+  }
+
+  return edgeByParameterId.get(id) ?? edgeAliases[id];
 }
 
 function endpoint(from: DiagramNode, to: DiagramNode, radius: number) {
