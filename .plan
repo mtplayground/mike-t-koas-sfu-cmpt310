@@ -1,0 +1,63 @@
+Architecture plan for the 22-issue implementation sequence
+
+Project shape
+- Vite + React + TypeScript single-page app with Tailwind CSS.
+- Pure TypeScript autograd/training core under src/lib so it can be unit-tested without React.
+- React components under src/components, grouped by layout, math, network visualization, controls, and panels.
+- Vitest for unit and component-level tests; Playwright for the final walkthrough.
+
+Proposed file organization
+- src/main.tsx: React entrypoint.
+- src/App.tsx: top-level app composition and shell wiring.
+- src/styles/index.css: Tailwind imports and base theme tokens.
+- src/lib/autograd/value.ts: scalar Value node, graph links, forward ops, gradient fields, labels, metadata.
+- src/lib/autograd/ops.ts: arithmetic, activation, and loss helpers with local backward closures.
+- src/lib/autograd/backprop.ts: topological traversal and reverse-mode gradient propagation.
+- src/lib/network/preset.ts: fixed network topology, preset weights, sample input, target, and labels.
+- src/lib/network/stepController.ts: deterministic forward -> loss -> backward -> update state machine.
+- src/lib/network/types.ts: shared node, edge, phase, and step types used by core and UI.
+- src/components/math/MathRender.tsx: KaTeX wrapper.
+- src/components/network/NetworkDiagram.tsx: static SVG graph, active node/edge highlighting, animation hooks.
+- src/components/panels/MathPanel.tsx: live chain-rule display for current step.
+- src/components/panels/ExplanationPanel.tsx: concise explanation for the current step.
+- src/components/controls/StepControls.tsx: next, previous, reset controls.
+- src/components/layout/AppShell.tsx: responsive final layout binding diagram and panels.
+- tests/unit: autograd, network, controller, and update tests.
+- tests/e2e: end-to-end walkthrough test.
+
+Shared types
+- Value: scalar data, grad, parents, op name, backward callback, stable id, optional label.
+- GraphNode and GraphEdge: UI-safe view model derived from Value/network state.
+- NetworkState: weights, activations, loss, gradients, current step index, history snapshots.
+- Step: phase, active nodes, active edges, explanation key, math expression data, action payload.
+
+Issue dependency map
+- #1 is the project foundation.
+- #2 depends on #1 and establishes the visual shell used by later UI issues.
+- #3 depends on #1/#2 and enables #16.
+- #4 depends on #1 and should happen before broad implementation to stabilize tooling.
+- #5, #6, #7 build the autograd core in order.
+- #8 depends on #5-#7.
+- #9 depends on the core shape from #5-#7.
+- #10 depends on #5 and #7, and feeds #11.
+- #11 depends on #9 and #10.
+- #12 depends on #11.
+- #13 depends on #9 for the fixed topology.
+- #14 depends on #11 and #13.
+- #15 depends on #14.
+- #16 depends on #3 and #11.
+- #17 depends on #11.
+- #18 depends on #11 and feeds final composition.
+- #19 depends on #13-#18.
+- #20 depends on #19.
+- #21 depends on #19 and should run after the full UI exists.
+- #22 depends on #20/#21 and finalizes production build/deploy readiness.
+
+Key design decisions
+- Keep the autograd core framework-agnostic and deterministic; React should render snapshots rather than mutate graph objects directly.
+- Store step history as serializable snapshots so previous/reset controls are simple and testable.
+- Use stable ids for nodes and edges from the fixed network definition; UI highlighting and tests should not depend on array order.
+- Let Value backward closures implement only local derivatives, while backprop owns graph traversal and gradient accumulation.
+- Prefer SVG for the fixed network diagram because it provides precise layout, accessible labels, and straightforward animation targets.
+- Keep KaTeX rendering behind one reusable component so math sanitization, error handling, and display mode stay consistent.
+- Keep explanations data-driven from step metadata where practical, avoiding hard-coded logic scattered across panels.
