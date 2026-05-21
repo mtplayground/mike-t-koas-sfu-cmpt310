@@ -36,6 +36,10 @@ function scalarPresetPrediction() {
   return sigmoid(outputPre);
 }
 
+function scalarPresetLoss() {
+  return (scalarPresetPrediction() - PRESET_TRAINING_EXAMPLE.target) ** 2;
+}
+
 describe("preset network", () => {
   it("defines a fixed two-input, two-hidden, one-output topology", () => {
     expect(PRESET_NETWORK_TOPOLOGY).toEqual({
@@ -69,12 +73,26 @@ describe("preset network", () => {
     expect(network.prediction.label).toBe("yHat");
     expect(network.prediction.op).toBe("sigmoid");
     expect(network.target.data).toBe(PRESET_TRAINING_EXAMPLE.target);
+    expect(network.loss.label).toBe("loss");
+    expect(network.loss.op).toBe("multiply");
     expect(network.parameters).toHaveLength(9);
   });
 
-  it("matches the hand-computed forward prediction", () => {
+  it("matches the hand-computed forward prediction and loss", () => {
     const network = buildPresetNetwork();
 
     expectClose(network.prediction.data, scalarPresetPrediction());
+    expectClose(network.loss.data, scalarPresetLoss());
+  });
+
+  it("backpropagates the MSE gradient to prediction and target", () => {
+    const network = buildPresetNetwork();
+    const residual = network.prediction.data - network.target.data;
+
+    network.loss.backward();
+
+    expectClose(network.loss.grad, 1);
+    expectClose(network.prediction.grad, 2 * residual);
+    expectClose(network.target.grad, -2 * residual);
   });
 });

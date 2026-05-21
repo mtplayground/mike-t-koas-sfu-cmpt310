@@ -1,4 +1,4 @@
-import { constant, type Value } from "../autograd";
+import { constant, meanSquaredError, type Value } from "../autograd";
 import type {
   HiddenNodeId,
   InputId,
@@ -102,6 +102,11 @@ export function buildPresetNetwork(): PresetNetworkValues {
 
   const prediction = outputPreActivation.sigmoid({ label: "yHat" });
   const target = constant(PRESET_TRAINING_EXAMPLE.target, { label: "target" });
+  const loss = meanSquaredError(prediction, target, {
+    label: "loss",
+    residualLabel: "prediction-target",
+    negativeTargetLabel: "-target",
+  });
 
   return {
     inputs,
@@ -112,6 +117,7 @@ export function buildPresetNetwork(): PresetNetworkValues {
     outputPreActivation,
     prediction,
     target,
+    loss,
     parameters: [
       weights.inputHidden.h1.x1,
       weights.inputHidden.h1.x2,

@@ -46,5 +46,6 @@ export interface PresetNetworkValues {
   outputPreActivation: Value;
   prediction: Value;
   target: Value;
+  loss: Value;
   parameters: readonly Value[];
 }
