@@ -44,16 +44,12 @@ export function Math({
     } catch (error) {
       return {
         html: null,
-        error:
-          error instanceof Error ? error.message : "Unable to render math.",
+        error: error instanceof Error ? error.message : "Unable to render math.",
       };
     }
   }, [displayMode, latex, macros]);
 
-  const classes = [
-    displayMode ? "block overflow-x-auto" : "inline-block",
-    className,
-  ]
+  const classes = [displayMode ? "block overflow-x-auto" : "inline-block", className]
     .filter(Boolean)
     .join(" ");
 

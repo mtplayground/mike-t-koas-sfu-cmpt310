@@ -46,8 +46,8 @@ function MathPlaceholder() {
 function ExplanationPlaceholder() {
   return (
     <p className="text-sm leading-6 text-zinc-600">
-      Step context will appear here as the controller advances through the
-      training sequence.
+      Step context will appear here as the controller advances through the training
+      sequence.
     </p>
   );
 }
